@@ -1,10 +1,10 @@
-import Axios from 'axios'
-import jsonwebtoken from 'jsonwebtoken'
-import { createLogger } from '../../utils/logger.mjs'
+import Axios from 'axios';
+import jsonwebtoken from 'jsonwebtoken';
+import { createLogger } from '../../utils/logger.mjs';
 
-const logger = createLogger('auth')
+const logger = createLogger('auth');
 
-const jwksUrl = 'https://dev-udacity-test.us.auth0.com/.well-known/jwks.json'
+const jwksUrl = 'https://dev-udacity-test.us.auth0.com/.well-known/jwks.json';
 
 export async function handler(event) {
   try {
@@ -43,11 +43,25 @@ export async function handler(event) {
 }
 
 async function verifyToken(authHeader) {
-  const token = getToken(authHeader)
-  const jwt = jsonwebtoken.decode(token, { complete: true })
+  const token = getToken(authHeader);
+  const jwt = jsonwebtoken.decode(token, { complete: true });
 
   // TODO: Implement token verification
-  return undefined;
+  const res = await Axios.get(jwksUrl);
+  const signingKey = res.data.keys.find(x => x.kid === jwt.kid);
+  logger.info('signingKey', signingKey);
+
+  //get pem data
+  const pemData = signingKey.x5c[0];
+  //convert pem to cert
+  const cert = `-----BEGIN CERTIFICATE-----\n${pemData}\n-----END CERTIFICATE-----`;
+  var test = JwtPayload;
+  // verify data
+  const verified = veriry(token, cert, {algorithm: ['RS256']});
+  
+  logger.info('verifiedToken', verified);
+
+  return verified;
 }
 
 function getToken(authHeader) {
