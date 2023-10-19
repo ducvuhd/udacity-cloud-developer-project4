@@ -30,6 +30,8 @@
     "winston": "^3.8.2"
   },
   "devDependencies": {
+    "serverless-aws-documentation": "^1.1.0",
+    "serverless-reqvalidator-plugin": "^3.1.0",
     "typescript": "^5.2.2"
   }
 }
