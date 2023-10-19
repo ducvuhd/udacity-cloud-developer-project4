@@ -2,7 +2,7 @@ import AWS from 'aws-sdk';
 import AWSXRay from 'aws-xray-sdk';
 
 const s3Bucket = process.env.IMAGES_S3_BUCKET;
-const urlExpiration = process.env.SIGNED_URL_EXPIRATION;
+const urlExpiration = +process.env.SIGNED_URL_EXPIRATION;
 
 export class AttachmentS3 {
 

@@ -1,4 +1,4 @@
-import { createLogger } from '../../utils/logger.mjs';
+import { createLogger } from '../utils/logger.mjs';
 import { TodosAccess } from '../dataLayer/todos.mjs';
 import { uuid } from 'uuidv4';
 import { AttachmentS3 } from '../utils/s3Attachment.mjs';
@@ -12,7 +12,7 @@ const attachmentS3 = new AttachmentS3();
 export async function getTodos(userId) {
     logger.info('---getTodos event Business---');
 
-    return todosAccess.getAllTodos(userId)
+    return todosAccess.getTodos(userId);
 }
 
 //create item  
@@ -38,18 +38,18 @@ export async function createTodo(newTodo, userId) {
 export async function updateTodo(userId, todoId, todoUpdate) {
     logger.info('---updateTodo event Business---');
 
-    return await todosAccess.updateTodoItem(userId, todoId, todoUpdate);
+    return await todosAccess.updateTodo(userId, todoId, todoUpdate);
 }
 
 //delete item 
 export async function deleteTodo(todoId, userId) {
     logger.info('---deleteTodo event Business---');
 
-    return await todosAccess.deleteTodoItem(todoId, userId);
+    return await todosAccess.deleteTodo(todoId, userId);
 }
 
 //generate upload url 
-export async function createAttachmentPresignedUrl(todoId, userId) {
+export async function createAttachmentPresignedUrl(todoId) {
     logger.info('---createAttachmentPresignedUrl event Business---');
 
     return await attachmentS3.getUploadUrl(todoId);

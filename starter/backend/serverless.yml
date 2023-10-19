@@ -4,6 +4,7 @@ service: serverless-todo-app
 
 plugins:
   - serverless-iam-roles-per-function
+  - serverless-reqvalidator-plugin
 
 frameworkVersion: '3.35.2'
 
@@ -20,7 +21,7 @@ provider:
     TODOS_TABLE: serverless-todo-app-${self:provider.stage}
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
     IMAGES_S3_BUCKET: udacity-serverless-todo-images-${self:provider.stage}
-    SIGNED_URL_EXPIRATION: '300' 
+    SIGNED_URL_EXPIRATION: 300
     PROJECT_NAME: udacity-serverless-todo-app
     INDEX_NAME: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
   logs: 
@@ -39,6 +40,13 @@ functions:
 
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - "xray:PutTraceSegments"
+          - "xray:PutTelemetryRecords"
+        Resource:
+          - "*"    
 
   # TODO: Configure this function
   GetTodos:
@@ -55,6 +63,10 @@ functions:
         Action:
           - dynamodb:Query
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_CREATED_AT_INDEX}
       - Effect: Allow
         Action:
           - xray:PutTraceSegments
@@ -165,19 +177,25 @@ functions:
 resources:
   Resources:
     # TODO: Add any necessary AWS resources
-    RestApi:
-      Type: AWS::ApiGateway::RestApi
-      Properties:
-        Name: myRestApi
-    GatewayResponse:
+    GatewayResponseDefault4XX:
       Type: AWS::ApiGateway::GatewayResponse
       Properties:
         ResponseParameters:
           gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
-          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
-        ResponseType: MISSING_AUTHENTICATION_TOKEN
-        RestApiId: !Ref ApiGatewayRestApi
-        StatusCode: '404'
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+          gatewayresponse.header.Access-Control-Allow-Methods: "'OPTIONS,GET,POST,PUT,DELETE'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          !Ref ApiGatewayRestApi
+
+    RequestBodyValidator:
+      Type: AWS::ApiGateway::RequestValidator
+      Properties:
+        Name: 'request-body-validator'
+        RestApiId:
+          !Ref 'ApiGatewayRestApi'
+        ValidateRequestBody: true
+        ValidateRequestParameters: false          
     # Here "TodosTable" is the name for cross-referencing  in the serverless.yml file
     # It's not the name of the actual DynamoDB table. 
     TodosTable:
@@ -243,4 +261,4 @@ resources:
                 Principal: '*'
                 Action: 's3:GetObject'
                 Resource: 'arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*'
-          Bucket: !Ref AttachmentsBucket        
+          Bucket: !Ref AttachmentsBucket

@@ -1,4 +1,4 @@
-import { createLogger } from '../../utils/logger.mjs';
+import { createLogger } from '../utils/logger.mjs';
 import AWS from 'aws-sdk';
 import AWSXRay from 'aws-xray-sdk';
 
@@ -67,8 +67,8 @@ export class TodosAccess {
         return updateItem;
       }
     
-      async deleteTodoItem(todoId, userId) {
-        logger.info('deleteTodoItem function');
+      async deleteTodo(todoId, userId) {
+        logger.info('deleteTodo function');
     
         const result = await docClient
           .delete({
