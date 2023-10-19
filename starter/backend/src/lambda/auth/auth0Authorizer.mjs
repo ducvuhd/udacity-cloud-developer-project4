@@ -55,7 +55,6 @@ async function verifyToken(authHeader) {
   const pemData = signingKey.x5c[0];
   //convert pem to cert
   const cert = `-----BEGIN CERTIFICATE-----\n${pemData}\n-----END CERTIFICATE-----`;
-  var test = JwtPayload;
   // verify data
   const verified = veriry(token, cert, {algorithm: ['RS256']});
   
