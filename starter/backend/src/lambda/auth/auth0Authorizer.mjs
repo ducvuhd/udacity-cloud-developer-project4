@@ -4,7 +4,7 @@ import { createLogger } from '../../utils/logger.mjs';
 
 const logger = createLogger('auth');
 
-const jwksUrl = 'https://dev-udacity-test.us.auth0.com/.well-known/jwks.json';
+const jwksUrl = 'https://dev-q726zngm0w1y7igg.us.auth0.com/.well-known/jwks.json';
 
 export async function handler(event) {
   try {
@@ -43,24 +43,31 @@ export async function handler(event) {
 }
 
 async function verifyToken(authHeader) {
-  const token = getToken(authHeader);
-  const jwt = jsonwebtoken.decode(token, { complete: true });
+  logger.info('verifyingToken')
+  const token = getToken(authHeader)
+  const jwt = jsonwebtoken.decode(token, { complete: true })
 
   // TODO: Implement token verification
-  const res = await Axios.get(jwksUrl);
-  const signingKey = res.data.keys.find(x => x.kid === jwt.kid);
-  logger.info('signingKey', signingKey);
+  const response = await Axios.get(jwksUrl)
+  const keys = response.data.keys
+  const signingKeys = keys.find(key => key.kid === jwt.header.kid)
+  logger.info('signingKeys', signingKeys)
 
-  //get pem data
-  const pemData = signingKey.x5c[0];
-  //convert pem to cert
-  const cert = `-----BEGIN CERTIFICATE-----\n${pemData}\n-----END CERTIFICATE-----`;
-  // verify data
-  const verified = veriry(token, cert, {algorithm: ['RS256']});
-  
-  logger.info('verifiedToken', verified);
+  if (!signingKeys) {
+    throw new Error('The JWKS endpoints did not contain any keys')
+  }
 
-  return verified;
+  // get pem  data
+  const pemData = signingKeys.x5c[0]
+
+  // convert pem data to cert
+  const cert = `-----BEGIN CERTIFICATE-----\n${pemData}\n-----END CERTIFICATE-----`
+
+  // verify token
+  const verifiedToken = jsonwebtoken.verify(token, cert, { algorithms: ['RS256'] })
+  logger.info('verifiedToken', verifiedToken)
+
+  return verifiedToken
 }
 
 function getToken(authHeader) {
